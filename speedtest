@@ -1,0 +1,74 @@
+! Speedtest by wlubas 2017
+puts "Speedtest 0.1 wlubas 2017"
+puts "You can terminate loop by pressing Ctrl + Shift + 6"
+
+set prevsumindata 0
+set prevsumoutdata 0
+
+for {set laps 1} {$laps>0} {incr laps} {
+
+set obits 0
+set obitsu kb/s
+set ibits 0
+set ibitsu kb/s
+set obytes 0
+set obytesu kB/s
+set ibytes 0
+set ibytesu kB/s
+
+set time [clock format [clock seconds] -format "%H:%M:%S"]
+set date [clock format [clock seconds] -format "%D"]
+
+set ifindata [snmp_getone snmp_password 1.3.6.1.2.1.2.2.1.10.1]
+set ifoutdata [snmp_getone snmp_password 1.3.6.1.2.1.2.2.1.16.1]
+regexp -inline {oid='(.*)'.*val='(.*)'} $ifindata
+regexp {oid='(.*)'.*val='(.*)'} $ifindata ignore oid sumindata
+regexp -inline {oid='(.*)'.*val='(.*)'} $ifoutdata
+regexp {oid='(.*)'.*val='(.*)'} $ifoutdata ignore oid sumoutdata
+
+set diffoutdata [expr ($sumoutdata-$prevsumoutdata)]
+set diffindata [expr ($sumindata-$prevsumindata)]
+
+set diffoutkb [expr $diffoutdata*8/1024]
+set diffinkb [expr $diffindata*8/1024]
+set diffoutkbytes [expr $diffoutdata/1024]
+set diffinkbytes [expr $diffindata/1024]
+
+
+if {$diffoutkb>2000} { set obitsu Mb/s
+set obits [expr $diffoutkb/1000] } else { set obits $diffoutkb }
+
+if {$diffinkb>2000} { set ibitsu Mb/s
+set ibits [expr $diffinkb/1000] } else { set ibits $diffinkb }
+
+if {$diffoutkbytes>10000} { set obytesu MB/s
+set obytes [expr $diffoutkbytes/1000] } else { set obytes $diffoutkbytes }
+
+if {$diffinkbytes>10000} { set ibytesu MB/s
+set ibytes [expr $diffinkbytes/1000] } else { set ibytes $diffinkbytes }
+
+set line [puts "$time $date  Upload $obits$obitsu = $obytes$obytesu      Download $ibits$ibitsu = $ibytes$ibytesu"]
+
+set prevsumindata $sumindata
+set prevsumoutdata $sumoutdata
+
+after 1000
+
+unset time
+unset date
+unset ifindata
+unset ifoutdata
+unset sumindata
+unset sumoutdata
+unset diffoutkb
+unset diffinkb
+unset diffoutkbytes
+unset diffinkbytes
+unset diffoutdata
+unset diffindata
+unset line
+unset obits
+unset obitsu
+unset ibits
+unset ibitsu
+}
